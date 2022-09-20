@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Game {
@@ -24,11 +25,13 @@ public class Game {
         zipFiles(nameFiles);
 
 
-        for (String g : nameFiles) {
-            File save = new File(g);
-            if (save.delete())
-                System.out.println("Файл удален");
-        }
+        deleteFiles(nameFiles);
+
+        openZip();
+
+        openProgress(nameFiles.get(0), hero1);
+        openProgress(nameFiles.get(1), hero2);
+        openProgress(nameFiles.get(2), hero3);
 
 
     }
@@ -48,8 +51,7 @@ public class Game {
         try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream("/Users/evgenijputilin/Desktop/Games/savegames/package.zip"))) {
             for (String d : name) {
                 File nameFile = new File(d);
-
-                try (FileInputStream fis = new FileInputStream("/Users/evgenijputilin/Desktop/Games/savegames/save1.dat")) {
+                try (FileInputStream fis = new FileInputStream(d)) {
                     ZipEntry entry = new ZipEntry(nameFile.getName());
                     zout.putNextEntry(entry);
                     byte[] buffer = new byte[fis.available()];
@@ -64,6 +66,43 @@ public class Game {
         } catch (Exception exe) {
             System.out.println(exe.getMessage());
         }
+    }
+
+    static void deleteFiles(List<String> nameFiles) {
+        for (String g : nameFiles) {
+            File save = new File(g);
+            if (save.delete())
+                System.out.println("Файл удален");
+        }
+
+    }
+
+    static void openZip() {
+        try (ZipInputStream zin = new ZipInputStream(new FileInputStream("/Users/evgenijputilin/Desktop/Games/savegames/package.zip"))) {
+            ZipEntry entry;
+            while ((entry = zin.getNextEntry()) != null) {
+                FileOutputStream fout = new FileOutputStream("/Users/evgenijputilin/Desktop/Games/savegames/" + entry.getName());
+                for (int c = zin.read(); c != -1; c = zin.read()) {
+                    fout.write(c);
+                }
+                fout.flush();
+                zin.closeEntry();
+                fout.close();
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
+    static void openProgress(String path, GameProgress hero) {
+        try (FileInputStream fis = new FileInputStream(path)) {
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            hero = (GameProgress) ois.readObject();
+            System.out.println(hero);
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+
     }
 
 
